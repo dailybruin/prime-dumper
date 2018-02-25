@@ -1,0 +1,2 @@
+# Prime Dumper
+Script that takes posts from graphics.dailybruin.com/prime and creates Markdown/JSON files for use in Daily Bruin's refreshed prime site at [http://prime.dailybruin.com](http://prime.dailybruin.com) 

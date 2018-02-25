@@ -1,4 +1,5 @@
 *.md
+!README.md
 *.pyc
 __pycache__
 *~
