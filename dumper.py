@@ -3,8 +3,14 @@ import sys
 import os
 import csv
 import image_scraper
+import urllib.request
+
+# add headers to url lib
 
 def main():
+    opener = urllib.request.build_opener()
+    opener.addheaders = [('User-agent', 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:55.0) Gecko/20100101 Firefox/55.0')]
+    urllib.request.install_opener(opener)
     article_list = dict({}) # id is article id
     author_list = dict({}) # id is author id
     issue_list = dict({}) # id is issue id
@@ -31,6 +37,13 @@ def main():
         csv_reader = csv.DictReader(csv_author_relation)
         for row in csv_reader:
             article_list[row['article_id']].author = author_list[row['author_id']]
+    with open('./' + 'prime_image.csv') as csv_image:
+        csv_reader = csv.DictReader(csv_image)
+        for row in csv_reader:
+            toAdd = image(row['id'], row['image'], '')
+            image_list.update({row['id']: toAdd})
+    create_image_directories(image_list)
+    image_in_body(article_list, image_list)
     
     # open something for writing markdown files
     for key, value in article_list.items():
@@ -63,9 +76,43 @@ class issue:
         self.issue_name = issue_name
         self.issue_slug = issue_slug
 class image:
-    def __init__(self, image_id, rel_URL, author_id):
+    def __init__(self, image_id, rel_URL, author_name):
         self.image_id = image_id
         self.rel_URL = rel_URL
-        self.author_id = author_id
+        self.author_name = author_name
+
+def scrape_lead_image(relative_URL):
+    print('fill')
+def scrape_image_id(image_id):
+    print('fill')
+def create_image_directories(image_list):
+    for key, value in image_list.items():
+        pen_index = value.rel_URL.rfind('/') + 1
+        slug_dir = value.rel_URL[0:pen_index]
+        if not os.path.exists(slug_dir):
+            os.makedirs(slug_dir)
+        # except OSError as e:
+        #     if e.errno != errno.EEXIST:
+        #         raise
+
+def image_in_body(article_list, image_list):
+    for key, value in article_list.items():
+        while(value.body.find('[img') != -1):
+            base_index = value.body.find('[img')
+            begin_index = base_index + 4
+            end_index = value.body.find(' ', base_index)
+            end_bracket = value.body.find(']', base_index)
+            position = value.body[end_index + 1:end_bracket]
+            image_id = value.body[begin_index : end_index]
+            to_replace = value.body[base_index:end_bracket+1]
+            replacement_string = '![' + image_list[image_id].author_name + '|' + position + '](' + image_list[image_id].rel_URL + ')'
+            # now we can scrape this
+            # create the folder if it doesn't exist already                
+            print('retrieving: '+ 'http://graphics.dailybruin.com/media/' + image_list[image_id].rel_URL, image_list[image_id].rel_URL)
+            urllib.request.urlretrieve('http://graphics.dailybruin.com/media/' + image_list[image_id].rel_URL, image_list[image_id].rel_URL)
+            print(to_replace)
+            print(replacement_string)
+            new_body = value.body.replace(to_replace, replacement_string)
+            article_list[key].body = new_body
 
 main()
